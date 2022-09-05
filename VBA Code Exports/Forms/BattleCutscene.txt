@@ -1,0 +1,247 @@
+Option Explicit
+Dim isBattleOver As Boolean
+Dim currentPlayerAttackElement As String
+
+Private Sub UserForm_Activate()
+
+    
+    DrawScreen
+    
+    Sleep 1000
+    UseWeapon BattleCutscene.Weapon_Selected.Caption
+    
+End Sub
+
+Private Sub UserForm_Initialize()
+
+    'Use the code from online to hide the userform's X button
+    Call SystemButtonSettings(Me, False)
+    
+    BattleForm.Hide
+    isBattleOver = False
+    
+    DrawScreen
+
+End Sub
+
+Private Sub DrawScreen()
+Dim tempShield As New clsShield
+Dim enemy As clsEnemy
+
+    'Reset the healths
+    BattleCutscene.Health_Enemy.Caption = EnemyInRange.GetEnemyHealth
+    BattleCutscene.Health_Player.Caption = Player.GetPlayerHealth
+    
+    BattleCutscene.Lbl_EnemyDamageTaken.Visible = False
+    BattleCutscene.Lbl_PlayerDamageTaken.Visible = False
+    BattleCutscene.Lbl_Result.Visible = False
+    
+    Set enemy = EnemyInRange
+    
+    BattleCutscene.Enemy_Image.Picture = BattleForm.Enemy_Image.Picture
+    BattleCutscene.Enemy_Damage.Caption = enemy.enemyDamageLevel
+    BattleCutscene.Health_Enemy.Caption = enemy.GetEnemyHealth
+    BattleCutscene.Element_Enemy.Picture = ImageTemplate("Element_" & enemy.enemyElement).Picture
+    
+    BattleCutscene.Health_Player.Caption = BattleForm.Health_Player.Caption
+    BattleCutscene.Player_Image.Picture = BattleForm.Player_Image.Picture
+
+''TODO: Set up Player Image if using multiple images
+    Set tempShield = Player.activeShield
+    
+    If (tempShield.shieldElement = "") Then
+    
+        BattleCutscene.Shield_Element.Visible = False
+        BattleCutscene.Shield_Image.Visible = False
+        BattleCutscene.Shield_Protection.Visible = False
+
+    Else
+        BattleCutscene.Shield_Element.Picture = ImageTemplate("Element_" & Player.activeShield.shieldElement).Picture
+        BattleCutscene.Shield_Image.Visible = True
+        BattleCutscene.Shield_Image.Visible = True
+        BattleCutscene.Shield_Protection.Caption = tempShield.shieldProtection
+        BattleCutscene.Shield_Protection.Visible = True
+    End If
+    
+    DoEvents
+
+End Sub
+
+'Player
+Sub UseWeapon(number As Integer)
+Dim strikeDamage As Integer
+
+Debug.Print "Player firing"
+    
+    currentPlayerAttackElement = Player.activeWeapons(number).weaponElement
+    strikeDamage = DetermineDamage(Player.activeWeapons(number).damageLevel, True)
+    TakeDamage True, strikeDamage
+        
+    'Check if battle over
+    If (isBattleOver) Then
+        BattleCutscene.Hide
+    Else
+        'Pause before letting enemy strike
+        Sleep 2000
+        UseEnemyWeapon
+    End If
+    
+End Sub
+
+'Enemy
+Sub UseEnemyWeapon()
+Dim strikeDamage As Integer
+    Debug.Print "ENEMY HAS ATTACKED"
+    
+    Sleep 2000
+    strikeDamage = DetermineDamage(EnemyInRange.enemyDamageLevel, False)
+    TakeDamage False, strikeDamage
+    
+    'Check if battle is over
+    If (isBattleOver) Then
+        
+    
+    Else
+        'Re-enable the player weapons
+        BattleForm.EnableWeapons True
+    
+        Sleep 1000
+        Debug.Print "Weapons Enabled"
+        BattleCutscene.Hide
+        BattleForm.show
+    End If
+    
+End Sub
+
+
+Function DetermineDamage(damageLevel As Integer, isPlayerAttacking As Boolean)
+Dim i As Integer
+Dim random As Integer
+Dim power As Integer
+Dim elementAdjuster As Long
+Dim damageAmount As Integer
+
+'''NEED TO ADJUST FOR SHIELD AND ELEMENT
+
+    'Generate a random number to determine the damage level for this hit
+    random = RandomBetweenTwoNumbers(0, 100)
+    For i = 1 To 5
+        'Determine where in the probability table this random number falls
+        If (random >= ProbabilityAdjustment(i, 1)) Then power = ProbabilityAdjustment(i, 2)
+    Next i
+    
+    If (isPlayerAttacking) Then
+        elementAdjuster = DetermineElementAdjuster(currentPlayerAttackElement, EnemyInRange.enemyElement)
+    Else
+        'Make sure player has a shield
+        If (Player.activeShield Is Nothing) Then
+            elementAdjuster = 0.4
+        Else
+            elementAdjuster = DetermineElementAdjuster(EnemyInRange.enemyElement, Player.activeShield.shieldElement)
+        End If
+    End If
+    
+    
+    'Set the power level for this weapon hit
+    damageAmount = damageLevel * power * elementAdjuster / 100
+    
+    'Adjust the damage to prevent multiple 0 attacks in a row
+    If (damageAmount = 0) Then damageAmount = RandomBetweenTwoNumbers(0, 2)
+    
+    DetermineDamage = damageAmount
+
+End Function
+
+Sub TakeDamage(isPlayerAttacking As Boolean, amount As Integer)
+Dim currentHealth As Integer
+Dim SomeoneDied As Boolean
+Dim enemy As clsEnemy
+
+    If (isPlayerAttacking) Then
+        Set enemy = EnemyInRange
+        enemy.SetEnemyHealth (amount * -1)
+        currentHealth = enemy.GetEnemyHealth
+        
+        If (currentHealth <= 0) Then
+            currentHealth = 0
+            enemy.EnemyDead
+            SomeoneDied = True
+        End If
+        
+        BattleForm.ResetHealth
+        BattleCutscene.Health_Enemy.Caption = currentHealth
+        
+        'show damage amount
+        BattleCutscene.Lbl_EnemyDamageTaken.Caption = "-" & amount
+        BattleCutscene.Lbl_EnemyDamageTaken.Visible = True
+
+    Else
+        Player.UpdatePlayerHealth (amount * -1)
+        currentHealth = Player.GetPlayerHealth
+        
+        If (currentHealth <= 0) Then
+            currentHealth = 0
+            Player.SetPlayerHealth 0, False
+            SomeoneDied = True
+        End If
+        
+        BattleForm.ResetHealth
+        BattleCutscene.Health_Player.Caption = Player.GetPlayerHealth
+        
+        'show damage amount
+        BattleCutscene.Lbl_PlayerDamageTaken.Caption = "-" & amount
+        BattleCutscene.Lbl_PlayerDamageTaken.Visible = True
+        
+    End If
+    
+    'Refresh the screen
+    DoEvents
+    Sleep 1000
+    
+    'Turn off images
+    BattleCutscene.Lbl_EnemyDamageTaken.Visible = False
+    BattleCutscene.Lbl_PlayerDamageTaken.Visible = False
+    DoEvents
+    
+    
+    If (SomeoneDied) Then
+    Dim result As String
+    Dim color As Long
+        If (isPlayerAttacking) Then
+            result = "YOU WIN!"
+            color = RGB(0, 255, 0)
+        Else
+            result = "YOU LOSE!"
+            color = RGB(255, 0, 0)
+        End If
+        
+        With BattleCutscene.Lbl_Result
+            .Caption = result
+            .ForeColor = color
+            .Visible = True
+        End With
+            
+        Sleep 2000
+        BattleOver (isPlayerAttacking)
+        Exit Sub
+    End If
+
+End Sub
+
+Private Sub BattleOver(isPlayerAlive As Boolean)
+    
+    isBattleOver = True
+    
+    If (isPlayerAlive) Then
+        EnemyInRange.isEnemyAlive = False
+    Else
+
+        
+    End If
+        
+    BattleCutscene.Hide
+    BattleForm.BattleOver (isPlayerAlive)
+    
+End Sub
+
+

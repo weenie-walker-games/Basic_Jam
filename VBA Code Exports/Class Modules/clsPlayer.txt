@@ -1,0 +1,201 @@
+Option Explicit
+
+Public currentLocationX As Integer
+Public currentLocationY As Integer
+Public priorLocationX As Integer
+Public priorLocationY As Integer
+Public currentPlayerImage As String
+Public currentPowerLevel As Integer
+Private currentXPAmount As Integer
+Private currentHealth As Integer
+Private maxHealth As Integer
+Private currentLives As Integer
+Private maximumLives As Integer
+Public weaponsInInventory As New Collection
+Public activeWeapons As New Collection
+Public shieldsInInventory As New Collection
+Public activeShield As New clsShield
+Private moveCounter As Integer
+Private neededXPAmount As Integer
+Private isAtMaxLevel As Boolean
+
+Public Function GetPlayerXP()
+
+    GetPlayerXP = currentXPAmount
+    
+End Function
+
+Public Sub UpdatePlayerXP(amountToAdd As Integer)
+
+    If (isAtMaxLevel) Then Exit Sub
+    
+    currentXPAmount = currentXPAmount + amountToAdd
+    
+    If (currentXPAmount < 0) Then currentXPAmount = 0
+    
+    CheckForLevelUp
+    GameLevel.UpdatePlayerXP currentXPAmount, neededXPAmount
+
+    
+End Sub
+
+Private Sub CheckForLevelUp()
+    
+    neededXPAmount = PowerLevels(currentPowerLevel, 2)
+    
+    'update the levels on the GameLevel screen
+    GameLevel.UpdatePlayerLevels currentPowerLevel, False
+    
+    
+    'Check to see if Player is at max power level
+    If (Player.currentPowerLevel = PlayerMaxPowerLevel) Then
+        isAtMaxLevel = True
+        Exit Sub
+    End If
+    
+    If (currentXPAmount > neededXPAmount) Then
+        'level up player
+        UpdatePowerLevel
+        
+        'reset the Player's XP down to new requirement
+        UpdatePlayerXP (-1 * neededXPAmount)
+    End If
+    
+    
+End Sub
+
+Private Sub UpdatePowerLevel()
+
+    currentPowerLevel = currentPowerLevel + 1
+    'Update the Power Level on the GameLevel screen if added
+    'update the levels on the GameLevel screen
+    
+    maxHealth = GetNewMaxHealth
+    currentHealth = maxHealth
+    
+    GameLevel.UpdatePlayerLevels currentPowerLevel, True
+        
+End Sub
+
+Public Sub AddMoveXP()
+        
+    'If player already max level, don't do anything
+    If (isAtMaxLevel) Then Exit Sub
+        
+    moveCounter = moveCounter + 1
+    
+    If (moveCounter >= MovementXPCounter) Then
+        'Add movementXP
+        UpdatePlayerXP MovementXPBoost
+        moveCounter = 0
+    End If
+End Sub
+
+Public Sub SetUpCharacter(startingPowerLevel As Integer, maxLives As Integer)
+Dim i As Integer
+
+    isAtMaxLevel = False
+    currentPowerLevel = startingPowerLevel
+    maxHealth = GetNewMaxHealth
+    currentHealth = maxHealth
+
+    maximumLives = maxLives     'This is hard coded in GameModule based on number of hearts in GameLevel form
+    currentLives = maxLives
+
+    currentXPAmount = 0
+    
+    'Clear the weapons
+    For i = (weaponsInInventory.count - 1) To 0 Step -1
+        weaponsInInventory.Remove (i)
+    Next i
+    
+    For i = (activeWeapons.count - 1) To 0 Step -1
+        activeWeapons.Remove (i)
+    Next i
+    
+    'add first weapon and shield
+    Dim newWeapon As String
+    newWeapon = CreateNewWeapon
+   
+    CreateShield
+    
+    
+End Sub
+
+Private Function GetNewMaxHealth()
+
+    GetNewMaxHealth = PowerLevels(currentPowerLevel, 0)
+    
+End Function
+
+Public Function CreateNewWeapon()
+Dim newWeapon As clsWeapon
+Dim newLocation As Integer
+
+    Set newWeapon = New clsWeapon
+    newWeapon.CreateWeapon (currentPowerLevel)
+    weaponsInInventory.Add newWeapon
+    newWeapon.locationInInventory = weaponsInInventory.count
+    
+    newLocation = activeWeapons.count
+    If (newLocation < 3) Then
+        newWeapon.locationInActiveInventory = newLocation + 1
+        activeWeapons.Add newWeapon
+    End If
+    
+    CreateNewWeapon = newWeapon.weaponName
+
+End Function
+
+Public Sub CreateShield()
+Dim newShield As clsShield
+    
+    Set newShield = New clsShield
+    newShield.CreateShield (currentPowerLevel)
+    shieldsInInventory.Add newShield
+    newShield.locationInInventory = shieldsInInventory.count
+    
+    If (activeShield.shieldElement = "") Then Set activeShield = newShield
+    
+End Sub
+
+Public Sub UpdatePlayerHealth(healthAdd As Integer)
+
+    currentHealth = currentHealth + healthAdd
+    
+End Sub
+
+
+Public Function GetPlayerHealth()
+
+    GetPlayerHealth = currentHealth
+End Function
+
+Public Sub SetPlayerHealth(newHealthValue As Integer, isToMax As Boolean)
+
+    If (isToMax) Then
+        currentHealth = maxHealth
+    Else
+        currentHealth = newHealthValue
+    End If
+    
+End Sub
+
+Public Sub UpdatePlayerLives(amountToAdd As Integer)
+    currentLives = currentLives + amountToAdd
+    
+    If (currentLives < 1) Then
+        IsGameOverResult = 1
+        Exit Sub
+    End If
+    
+End Sub
+
+Public Function GetPlayerLives()
+    GetPlayerLives = currentLives
+End Function
+
+Public Sub ResetPlayerLives(newAmount As Integer)
+'''This functionality would be incorporated into a save game system
+    currentLives = newAmount
+End Sub

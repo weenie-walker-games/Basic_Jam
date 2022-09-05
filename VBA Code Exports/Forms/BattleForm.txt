@@ -1,0 +1,217 @@
+Option Explicit
+
+
+Private weaponsEnabled As Boolean
+Private weaponCount As Integer
+Private isNotBattleStart As Boolean
+Private enemyHealth As Integer
+Private selectedWeapon As clsWeapon
+
+
+Private Sub Button_Flee_Click()
+    HasPlayerWon = False
+    
+    playerLost True
+    Sleep 500
+    
+    BattleForm.Hide
+    Unload Me
+    
+End Sub
+
+Public Sub BattleOver(didPlayerWin As Boolean)
+    
+    HasPlayerWon = didPlayerWin
+    Unload BattleCutscene
+    
+    If didPlayerWin Then
+        GameLevel.UpdateLives 3, enemyHealth
+    Else
+        playerLost False
+    End If
+    
+    isNotBattleStart = False
+    
+    BattleForm.Hide
+    Unload Me
+
+End Sub
+
+Private Sub playerLost(didFlee As Boolean)
+
+    If (didFlee) Then
+        GameLevel.UpdateLives 1, enemyHealth 'Battle Result of 1 is player fled
+    Else
+        GameLevel.UpdateLives 2, enemyHealth 'Battle Result of 2 is player lost
+    End If
+    
+
+    EnemyInRange.ResetHitPoint
+    
+    'Reset the player to the prior position
+    Player.currentLocationX = Player.priorLocationX
+    Player.currentLocationY = Player.priorLocationY
+    GameLevel.MovePlayer
+           
+End Sub
+
+Sub WeaponClick(weapon As Integer)
+    
+    
+    'Set up the selected weapon on the cutscene screen
+    BattleCutscene.Weapon_Selected.Caption = weapon
+    Set selectedWeapon = Player.activeWeapons(weapon)
+    BattleCutscene.Player_Weapon.Picture = ImageTemplate("Weapon_" & selectedWeapon.weaponName).Picture
+    BattleCutscene.Element_W.Picture = ImageTemplate("Element_" & selectedWeapon.weaponElement).Picture
+    BattleCutscene.Damage_Weapon.Caption = selectedWeapon.damageLevel
+    
+    Load BattleCutscene
+    
+    BattleForm.Hide
+    
+    BattleCutscene.show
+    
+
+
+End Sub
+
+Private Sub Button_Weapon1_Click()
+
+    WeaponClick (1)
+
+End Sub
+
+Private Sub Button_Weapon2_Click()
+
+    WeaponClick (2)
+
+End Sub
+
+
+Private Sub Button_Weapon3_Click()
+
+    WeaponClick (3)
+
+End Sub
+
+Private Sub Cmd_Elements_Click()
+    Load ElementCode
+    BattleForm.Hide
+    ElementCode.show
+    BattleForm.show
+End Sub
+
+Private Sub UserForm_Activate()
+Dim code As String
+Dim imagename As String
+Dim health As Integer
+Dim i As Integer
+Dim tempShield As New clsShield
+
+    HasPlayerWon = False
+    
+    'If the battle just started, update EnemyHealth; use the double negative to prevent issues with unassigned variables
+    If (Not isNotBattleStart) Then
+        enemyHealth = EnemyInRange.GetEnemyHealth
+        isNotBattleStart = True
+    End If
+    
+    'Set up enemy image and info
+    code = EnemyInRange.enemyCode
+    imagename = EnemiesTypesDict.Item(code).battleImage
+    BattleForm.Enemy_Image.Picture = ImageTemplate(imagename).Picture
+    health = EnemyInRange.GetEnemyHealth
+    BattleForm.Health_Enemy.Caption = health
+    imagename = EnemyInRange.enemyElement
+    BattleForm.Element_Enemy.Picture = ImageTemplate("Element_" & imagename).Picture
+    BattleForm.Enemy_Damage.Caption = EnemyInRange.enemyDamageLevel
+    
+    
+    'Set up player and weapons
+
+''TODO: Set up Player Image if using multiple images
+    Set tempShield = Player.activeShield
+    
+    If (tempShield.shieldElement = "") Then
+    
+        BattleForm.Shield_Element.Visible = False
+        BattleForm.Shield_Image.Visible = False
+        BattleForm.Shield_Protection.Visible = False
+
+    Else
+        BattleForm.Shield_Element.Picture = ImageTemplate("Element_" & Player.activeShield.shieldElement).Picture
+        BattleForm.Shield_Image.Visible = True
+        BattleForm.Shield_Image.Visible = True
+        BattleForm.Shield_Protection.Caption = tempShield.shieldProtection
+        BattleForm.Shield_Protection.Visible = True
+    End If
+    
+    weaponCount = Player.activeWeapons.count
+        'Turn off all the other weapons
+        If weaponCount < 3 Then
+            BattleForm.Button_Weapon3.Visible = False
+            BattleForm.Element_W3.Visible = False
+            BattleForm.Damage_Weapon3.Visible = False
+        End If
+        If weaponCount < 2 Then
+            BattleForm.Button_Weapon2.Visible = False
+            BattleForm.Element_W2.Visible = False
+            BattleForm.Damage_Weapon2.Visible = False
+        End If
+        
+        
+    'Set up the currentweapons
+    For i = 1 To weaponCount
+    
+        With BattleForm("Button_Weapon" & i)
+            .Visible = True
+            .Picture = ImageTemplate("Weapon_" & Player.activeWeapons(i).weaponName).Picture
+        End With
+        
+        With BattleForm("Element_W" & i)
+            .Visible = True
+            .Picture = ImageTemplate("Element_" & Player.activeWeapons(i).weaponElement).Picture
+        End With
+        
+        With BattleForm("Damage_Weapon" & i)
+            .Visible = True
+            .Caption = Player.activeWeapons(i).damageLevel
+        End With
+        
+    Next i
+    
+    weaponsEnabled = True
+
+End Sub
+
+Private Sub UserForm_Initialize()
+
+    'Use the code from online to hide the userform's X button
+    Call SystemButtonSettings(Me, False)
+    
+    ResetHealth
+    
+End Sub
+
+
+
+Sub EnableWeapons(toEnable As Boolean)
+Dim i As Integer
+    
+    'diable weapon buttons
+    weaponsEnabled = toEnable
+    For i = 1 To weaponCount
+        BattleForm("Button_Weapon" & i).Visible = toEnable
+    Next i
+    
+
+End Sub
+
+Public Sub ResetHealth()
+
+    Debug.Print "Player health = " & Player.GetPlayerHealth
+    BattleForm.Health_Player.Caption = Player.GetPlayerHealth
+    BattleForm.Health_Enemy.Caption = EnemyInRange.GetEnemyHealth
+    
+End Sub
+

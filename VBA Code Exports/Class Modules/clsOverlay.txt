@@ -1,0 +1,21 @@
+Option Explicit
+
+Public overlayType As String
+Public overlayClassItem As Variant
+
+
+Sub DefineClassItem(oType As String)
+    
+    overlayType = oType
+
+    Select Case oType
+    
+        Case "E"
+        Set overlayClassItem = New clsEnemy
+        
+        Case Else
+    
+    End Select
+    
+    
+End Sub

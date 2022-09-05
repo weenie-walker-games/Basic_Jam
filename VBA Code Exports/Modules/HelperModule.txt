@@ -1,0 +1,227 @@
+Option Explicit
+
+Function Letter2Number(columnLetter As String)
+'SOURCE: www.TheSpreadsheetGuru.com/the-code-vault
+
+    Letter2Number = Range(columnLetter & 1).Column
+
+End Function
+
+Function Number2Letter(columnNumber As Integer)
+'SOURCE: www.TheSpreadsheetGuru.com/the-code-vault
+
+    Number2Letter = Split(Cells(1, columnNumber).Address, "$")(1)
+    
+End Function
+
+Function RandomBetweenTwoNumbers(low As Integer, high As Integer)
+'SOURCE: https://www.automateexcel.com/vba/random-number/
+
+    RandomBetweenTwoNumbers = Int(low + Rnd * (high - low + 1))
+
+End Function
+
+Sub TryMove(horizontal As Integer, vertical As Integer)
+
+Dim newXLocation As Integer
+Dim newYLocation As Integer
+Dim canMove As Boolean
+Dim toBattle As Boolean
+Dim chestNearby As Boolean
+
+    
+    newXLocation = Player.currentLocationX + horizontal
+    newYLocation = Player.currentLocationY + vertical
+    
+    'Check to see if exit
+    If (LevelDetail(newXLocation, newYLocation).overlayCode) = "R" Then IsGameOverResult = 2    'This is hard-coded as the exit door; set to 2 to show player won
+    
+    
+    canMove = LevelDetail(newXLocation, newYLocation).isWalkable
+    
+    If (canMove) Then
+        'set the player's prior position to the current one in case needs to return
+        Player.priorLocationX = Player.currentLocationX
+        Player.priorLocationY = Player.currentLocationY
+        
+        'Set the player's new position
+        Player.currentLocationX = newXLocation
+        Player.currentLocationY = newYLocation
+    End If
+    
+    ''''SHOULD PUT IN A DIRECTION HERE TO CHANGE PHOTO'''
+        
+    
+    If (canMove) Then
+        
+        'Award player some XP
+        Player.AddMoveXP
+        
+        toBattle = CheckEnemiesDistance
+        
+        If toBattle Then
+            'GOTO Battle scene but move player first
+            GameLevel.Battle
+            Exit Sub
+        End If
+        
+        chestNearby = CheckChestDistance
+        GameLevel.ShowChestInfo chestNearby
+        
+        
+        
+    End If
+    
+    GameLevel.MovePlayer
+    
+End Sub
+
+Function CheckEnemiesDistance()
+    Dim items As Variant, isEnemyClose As Boolean, count As Integer, i As Integer
+    Dim enemy As clsEnemy
+    Dim IsPlayerNearby As Boolean
+    
+    items = EnemiesDict.items
+    count = (UBound(items) - LBound(items) + 1)
+    
+    'set the enemy variable to null first
+    EnemyInRange = Null
+    
+    For i = 0 To count - 1
+        Set enemy = items(i)
+        IsPlayerNearby = enemy.IsPlayerNearby
+        
+        If (IsPlayerNearby) Then
+            Set EnemyInRange = enemy
+            enemy.EnemyFound (Player.currentPowerLevel)
+            CheckEnemiesDistance = True
+            Exit Function
+        End If
+        
+    Next i
+    
+    'No enemy close enough; send back false
+    CheckEnemiesDistance = False
+End Function
+
+Function CheckChestDistance()
+    Dim items As Variant, isChestClose As Boolean, count As Integer, i As Integer
+    Dim treasure As clsTreasure
+    Dim IsPlayerNearby As Boolean
+    
+    items = ChestDict.items
+    count = (UBound(items) - LBound(items) + 1)
+    
+    'set the enemy variable to null first
+    ChestInRange = Null
+    
+    For i = 0 To count - 1
+        Set treasure = items(i)
+        IsPlayerNearby = treasure.IsPlayerNearby
+        
+        If (IsPlayerNearby) Then
+            Set ChestInRange = treasure
+            CheckChestDistance = True
+            Exit Function
+        End If
+        
+    Next i
+    
+    'No enemy close enough; send back false
+    CheckChestDistance = False
+End Function
+
+Function SetElement()
+'''Randomly assign an element
+
+'Make sure the Elements Dictionary is built before assiging a value from it
+If IsElementsBuilt = False Then BuildElements
+
+    Dim e As Integer
+    Dim items As Variant
+    
+    items = ElementsDict.items
+    
+    e = RandomBetweenTwoNumbers(0, ElementsDict.count - 1)
+    SetElement = items(e).elementName
+    
+    
+End Function
+
+Function DetermineElementAdjuster(attackingElement As String, defendingElement As String)
+Dim attacker As clsElement
+    
+    Set attacker = ElementsDict.Item(attackingElement)
+    
+        Select Case defendingElement
+    
+            Case "Earth"
+                DetermineElementAdjuster = attacker.pbEarth
+            Case "Fire"
+                DetermineElementAdjuster = attacker.pbFire
+            Case "Air"
+                DetermineElementAdjuster = attacker.pbAir
+            Case "Water"
+                DetermineElementAdjuster = attacker.pbWater
+            Case "Energy"
+                DetermineElementAdjuster = attacker.pbEnergy
+        
+        End Select
+    
+
+End Function
+
+Function ReturnElementName(value As Integer)
+
+    Select Case value
+        Case 0
+        ReturnElementName = "Earth"
+        Case 1
+        ReturnElementName = "Fire"
+        Case 2
+        ReturnElementName = "Air"
+        Case 3
+        ReturnElementName = "Water"
+        Case 4
+        ReturnElementName = "Energy"
+    End Select
+        
+
+End Function
+
+Sub CreateDictionaryExample()
+
+Dim d
+Set d = CreateObject("Scripting.Dictionary")
+d.Add "a", New clsLevelCellTypes
+d.Add "b", New clsOverlayCellTypes
+
+Dim currentCell
+
+Set currentCell = d.Item("a")
+currentCell.imagename = "IMG_00"
+
+Debug.Print d.Item("a").imagename
+Debug.Print d.count
+Debug.Print d.exists("f")
+
+End Sub
+
+Sub testing()
+    Dim d
+    Set d = CreateObject("Scripting.Dictionary")
+    Dim e As clsPlayer
+    Dim c As New clsTreasure
+    
+    Set Player = New clsPlayer
+    Player.currentLocationX = 15
+    Player.currentLocationY = 72
+    
+    c.locationX = 15
+    c.locationY = 73
+    
+    Debug.Print c.IsPlayerNearby
+    
+End Sub
+
+

@@ -1,0 +1,134 @@
+Option Explicit
+
+Public enemyElement As String
+Public xLocation As Integer
+Public yLocation As Integer
+Public enemyDifficulty As String
+Private enemyDifficultyAdjuster As Integer
+Public enemyCode As String
+Private enemyHitPoint As Integer
+Private currentHitPoint As Integer
+Public enemyDamageLevel As Integer
+Public isEnemyAlive As Boolean
+Private hasEnemyDetailsBeenSet As Boolean
+
+
+Function IsPlayerNearby()
+    
+    'Don't do anything if enemy already dead
+    If (isEnemyAlive = False) Then Exit Function
+
+    'Is the Player within range of the Enemy?
+    Dim xDist As Long, yDist As Long, totalDist As Long
+
+    xDist = Abs(xLocation - Player.currentLocationX)
+    yDist = Abs(yLocation - Player.currentLocationY)
+
+    'Use square magnitude to determine distance to Player
+    totalDist = Sqr((xDist * xDist) + (yDist * yDist))
+    IsPlayerNearby = (totalDist <= EnemyDistance)
+
+End Function
+
+Sub SetEnemyDifficulty(code As String)
+'''Use the code from the design to set the difficulty
+    
+    'first set enemy alive
+    isEnemyAlive = True
+    
+    Select Case code
+        Case "E"
+            enemyDifficulty = "Easy"
+        
+        Case "I"
+            enemyDifficulty = "Intermediate"
+        
+        Case "H"
+            enemyDifficulty = "Hard"
+        
+        Case "N"
+            enemyDifficulty = "Nightmare"
+        
+        Case Else
+        
+    End Select
+    
+    DetermineEnemyCode (enemyDifficulty)
+    
+End Sub
+
+Sub DetermineEnemyCode(difficulty As String)
+
+    Dim enemies() As Variant
+    Dim thisDifficultyList As Collection
+    Dim i As Integer, r As Integer, c As Integer
+    
+    
+    ReDim enemies(1 To EnemiesTypesDict.count)
+    enemies = EnemiesTypesDict.items
+    
+
+    
+    Set thisDifficultyList = New Collection
+    
+    c = EnemiesTypesDict.count
+    For i = 0 To (c - 1)
+        If (enemies(i).difficulty = difficulty) Then thisDifficultyList.Add enemies(i)
+        
+    Next i
+    
+    
+        
+    r = RandomBetweenTwoNumbers(1, thisDifficultyList.count)
+    enemyCode = thisDifficultyList(r).enemyCode
+    
+    'Set up the player scaler for this enemy
+    enemyDifficultyAdjuster = RandomBetweenTwoNumbers(thisDifficultyList(r).playerHealthScalerMin, thisDifficultyList(r).playerHealthScalerMax)
+    hasEnemyDetailsBeenSet = False
+
+End Sub
+
+Sub SetEnemyElement()
+'''Randomly assign an element
+
+    enemyElement = SetElement
+    
+    
+End Sub
+
+Public Sub EnemyFound(playerLevel As Integer)
+    
+    'If the enemy has already been met and defined by player's power level, exit
+    If (hasEnemyDetailsBeenSet) Then Exit Sub
+    
+    'Scale the enemy to the player's power level
+    enemyHitPoint = enemyDifficultyAdjuster * PowerLevels(playerLevel, 0) / 100
+    enemyDamageLevel = enemyDifficultyAdjuster * PowerLevels(playerLevel, 1) / 100
+    hasEnemyDetailsBeenSet = True
+    
+    ResetHitPoint
+    
+End Sub
+
+Public Function GetEnemyHealth()
+    
+    GetEnemyHealth = currentHitPoint
+    
+End Function
+
+Public Sub SetEnemyHealth(amountToAdd As Integer)
+
+    currentHitPoint = currentHitPoint + amountToAdd
+    
+End Sub
+
+Public Sub ResetHitPoint()
+
+    currentHitPoint = enemyHitPoint
+
+End Sub
+
+Public Sub EnemyDead()
+    currentHitPoint = 0
+    isEnemyAlive = False
+End Sub

@@ -1,0 +1,54 @@
+Option Explicit
+
+Private Sub Cmd_Battle_Click()
+    Battle
+End Sub
+
+Private Sub Cmd_Inventory_Click()
+    Load InventoryScene
+    InventoryScene.Lbl_FromScene.Caption = "Battle"
+    InventoryScene.SetupFromScene
+    Me.Hide
+    InventoryScene.show
+    
+    Battle
+    
+    
+End Sub
+
+Private Sub Battle()
+    
+    Load BattleForm
+    Me.Hide
+    BattleForm.ResetHealth
+    BattleForm.show
+    
+    Unload Me
+    
+End Sub
+
+
+Private Sub UserForm_Initialize()
+Dim code As String
+Dim imagename As String
+Dim adjective As String
+Dim enemy As clsEnemy
+
+    'Use the code from online to hide the userform's X button
+    Call SystemButtonSettings(Me, False)
+
+    'Set up the enemy
+    Set enemy = EnemyInRange
+    code = enemy.enemyCode
+    imagename = EnemiesTypesDict.Item(code).mainImage
+    adjective = EnemyAdjectives(RandomBetweenTwoNumbers(1, UBound(EnemyAdjectives)))
+    With EnemyAppear.Lbl_Title
+        .Picture = ImageTemplate(imagename).Picture
+        .Caption = adjective & " " & enemy.enemyElement & " " & EnemiesTypesDict.Item(code).description & " has appeared!"
+    End With
+    EnemyAppear.Element_Enemy.Picture = ImageTemplate("Element_" & enemy.enemyElement).Picture
+    
+    'Update the enemy's hit points based on player level
+    
+
+End Sub

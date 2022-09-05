@@ -1,0 +1,29 @@
+Option Explicit
+
+Public weaponName As String
+Public damageLevel As Integer
+Public weaponElement As String
+Public playerLevel As Integer
+Public locationInInventory As Integer
+Public locationInActiveInventory As Integer
+
+Public Sub CreateWeapon(level As Integer)
+Dim w As Integer
+Dim high As Integer, low As Integer
+
+    'Determine the weapon type
+    w = RandomBetweenTwoNumbers(0, UBound(WeaponTypes))
+    weaponName = WeaponTypes(w)
+    
+    'Determine weapon damage
+    playerLevel = level
+    high = PowerLevels(level, 1) * 1.2
+    low = PowerLevels(level, 1) * 0.8
+    damageLevel = RandomBetweenTwoNumbers(low, high)
+    
+    'Determine weapon element
+    weaponElement = SetElement
+
+
+End Sub
+

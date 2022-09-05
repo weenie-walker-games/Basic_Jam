@@ -1,0 +1,99 @@
+Option Explicit
+
+Public closedImage As String
+Public openImage As String
+Public locationX As Integer
+Public locationY As Integer
+Public isOpen As Boolean
+Public xpAmount As Integer
+Public hasShield As Boolean
+Public hasWeapon As Boolean
+Private itemType As String
+
+
+Public Sub SetupChest()
+    
+Dim shieldTest As Integer
+Dim weaponTest As Integer
+    
+    'Setup the xpAmount with some randomness
+        'This will adjust based on player level when opened
+    xpAmount = RandomBetweenTwoNumbers(8, 12)
+    
+    'Determine whether the chest will include a shield
+        'Want shield to be in 95% of chests
+        'Limit of 12 shields in inventory
+    If Player.shieldsInInventory.count < MAXSHIELDS Then
+        shieldTest = RandomBetweenTwoNumbers(0, 100)
+        If (shieldTest >= ProbablityOfShield) Then hasShield = True Else hasShield = False
+    End If
+    
+    'Determine whether the chest will include a weapon; can't hold one if it has a shield
+        'Want weapon to be in 75% of chests that don't already have a shield
+    If (Player.weaponsInInventory.count < MAXWEAPONS) Then
+        weaponTest = RandomBetweenTwoNumbers(0, 100)
+        If (weaponTest >= ProbablityOfWeapon And hasShield = False) Then hasWeapon = True Else hasWeapon = False
+    End If
+    
+    closedImage = ChestImageDict(1)
+    openImage = ChestImageDict(2)
+    isOpen = False
+
+End Sub
+
+Public Function IsPlayerNearby()
+
+Dim isNearby As Boolean
+Dim xDist As Integer
+Dim yDist As Integer
+
+    isNearby = False
+    
+    'If already open, don't say it can be opened again
+    If (isOpen) Then
+        IsPlayerNearby = False
+        Exit Function
+    End If
+    
+    'Next, find distance to player
+    xDist = Abs(locationX - Player.currentLocationX)
+    yDist = Abs(locationY - Player.currentLocationY)
+    
+    'Only say chest is nearby if player is in the row/column cells adjacent
+    If (xDist + yDist <= 1) Then isNearby = True
+    
+    IsPlayerNearby = isNearby
+        
+End Function
+
+Public Sub OpenChest(locationCell As Image, playerLevel As Integer)
+    
+Dim openXPAmount As Integer
+Dim itemString As String
+
+    'Set itemString to nothing so if nothing gets created, it doesn't change
+    itemString = ""
+
+    locationCell.Picture = ImageTemplate(openImage).Picture
+    openXPAmount = xpAmount * (1 + playerLevel)
+    
+    'Assign shield or weapon if applicable
+    If (hasShield) Then Player.CreateShield
+    If (hasWeapon) Then itemType = Player.CreateNewWeapon
+    
+    isOpen = True
+    
+''''Set up Alerts for player on stuff obtained
+    If (hasShield) Then
+        itemString = "Shield"
+    End If
+    
+    If (hasWeapon) Then
+        itemString = "Weapon_" & itemType
+    End If
+    
+    GameLevel.UponChestOpening itemString, openXPAmount
+    
+End Sub
+
+

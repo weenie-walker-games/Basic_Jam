@@ -1,0 +1,560 @@
+Option Explicit
+Dim i As Integer
+Dim activeWeapons As New Collection
+Dim weaponReference(1 To 3) As Boolean
+Dim tabIndex As Integer
+Dim weaponPage As Integer
+Dim pageCount As Integer
+
+Private Sub Active_S_Click()
+    If Player.activeShield.shieldElement <> "" Then RemoveShield True
+End Sub
+
+Private Sub InvWeaponClicked(weaponNum As Integer)
+Dim buttonWeapon As clsWeapon
+Dim nextSpot As Integer
+
+    Set buttonWeapon = Player.weaponsInInventory(weaponNum)
+    
+    nextSpot = GetNextAvailableSpot
+    
+    If nextSpot = -1 Then
+        MsgBox "You need to remove an active weapon before assigning a new one."
+        Exit Sub
+    End If
+    
+    'AddWeapon nextSpot, buttonWeapon, True
+    buttonWeapon.locationInActiveInventory = nextSpot
+    
+    UpdateActiveWeapons
+    
+End Sub
+
+Private Function GetNextAvailableSpot()
+'''Use this to find an open active spot
+
+    For i = 1 To 3
+        If weaponReference(i) = False Then
+            GetNextAvailableSpot = i
+            Exit Function
+        End If
+    Next i
+    
+    GetNextAvailableSpot = -1
+
+End Function
+
+Private Sub InvShieldClicked(shieldNum As Integer)
+    If (Player.activeShield.shieldElement = "") Then
+        AddShield Player.shieldsInInventory(shieldNum)
+    Else
+        MsgBox "You need to remove the active shield before assigning a new one."
+    End If
+    
+End Sub
+
+Private Sub Cmd_Battle_Click()
+    UpdateActiveWeapons
+    InventoryScene.Hide
+End Sub
+
+Private Sub Cmd_Elements_Click()
+    
+
+    Load ElementCode
+    InventoryScene.Hide
+    
+    'Reset the screen
+    weaponPage = 0
+    InventoryScene.Cmd_PrevPage.Enabled = False
+    
+    If (pageCount > 0) Then InventoryScene.Cmd_NextPage.Enabled = True
+    
+    ElementCode.show
+    InventoryScene.show
+    
+
+    
+End Sub
+
+Private Sub Cmd_Exit_Click()
+    UpdateActiveWeapons
+    InventoryScene.Hide
+End Sub
+
+
+''''''START OF PAGE BUTTONS
+Private Sub Cmd_PrevPage_Click()
+    If (weaponPage = 0) Then Exit Sub   'Do nothing
+    
+    
+    UpdateActiveWeapons
+    
+    'Go back a page
+    weaponPage = weaponPage - 1
+    
+    'Disable this button if back to first page
+    If (weaponPage = 0) Then InventoryScene.Cmd_PrevPage.Enabled = False
+    
+    'Enable the next button
+    InventoryScene.Cmd_NextPage.Enabled = True
+    
+    RedrawScreen
+    
+End Sub
+
+Private Sub Cmd_NextPage_Click()
+
+    If (pageCount = weaponPage) Then Exit Sub   'Do nothing
+    
+    UpdateActiveWeapons
+    
+    'Go back a page
+    weaponPage = weaponPage + 1
+    
+    'Disable this button if back to first page
+    If (weaponPage = pageCount) Then InventoryScene.Cmd_NextPage.Enabled = False
+    
+    'Enable the next button
+    InventoryScene.Cmd_PrevPage.Enabled = True
+    
+    RedrawScreen
+
+End Sub
+''''END OF PAGE BUTTONS'''
+
+
+''''''START OF INVENTORY SHIELD BUTTONS
+Private Sub Image_S1_Click()
+    InvShieldClicked (1)
+End Sub
+
+Private Sub Image_S2_Click()
+    InvShieldClicked (2)
+End Sub
+
+Private Sub Image_S3_Click()
+    InvShieldClicked (3)
+End Sub
+
+Private Sub Image_S4_Click()
+    InvShieldClicked (4)
+End Sub
+
+Private Sub Image_S5_Click()
+    InvShieldClicked (5)
+End Sub
+
+Private Sub Image_S6_Click()
+    InvShieldClicked (6)
+End Sub
+
+Private Sub Image_S7_Click()
+    InvShieldClicked (7)
+End Sub
+
+Private Sub Image_S8_Click()
+    InvShieldClicked (8)
+End Sub
+
+Private Sub Image_S9_Click()
+    InvShieldClicked (9)
+End Sub
+
+Private Sub Image_S10_Click()
+    InvShieldClicked (10)
+End Sub
+
+Private Sub Image_S11_Click()
+    InvShieldClicked (11)
+End Sub
+
+Private Sub Image_S12_Click()
+    InvShieldClicked (12)
+End Sub
+
+''''''END OF INVENTORY SHIELD BUTTONS''''
+
+
+
+
+''''''START OF INVENTORY WEAPON BUTTONS
+Private Sub Image_W1_Click()
+    
+    InvWeaponClicked ((weaponPage * 12) + 1)
+
+End Sub
+
+Private Sub Image_W2_Click()
+
+    InvWeaponClicked ((weaponPage * 12) + 2)
+
+End Sub
+
+Private Sub Image_W3_Click()
+
+    InvWeaponClicked ((weaponPage * 12) + 3)
+
+End Sub
+
+Private Sub Image_W4_Click()
+
+    InvWeaponClicked ((weaponPage * 12) + 4)
+
+End Sub
+
+Private Sub Image_W5_Click()
+
+    InvWeaponClicked ((weaponPage * 12) + 5)
+
+End Sub
+
+Private Sub Image_W6_Click()
+
+    InvWeaponClicked ((weaponPage * 12) + 6)
+
+End Sub
+
+Private Sub Image_W7_Click()
+
+    InvWeaponClicked ((weaponPage * 12) + 7)
+
+End Sub
+
+Private Sub Image_W8_Click()
+
+    InvWeaponClicked ((weaponPage * 12) + 8)
+
+End Sub
+
+Private Sub Image_W9_Click()
+
+    InvWeaponClicked ((weaponPage * 12) + 9)
+
+End Sub
+
+Private Sub Image_W10_Click()
+
+    InvWeaponClicked ((weaponPage * 12) + 10)
+
+End Sub
+
+Private Sub Image_W11_Click()
+
+    InvWeaponClicked ((weaponPage * 12) + 11)
+
+End Sub
+
+Private Sub Image_W12_Click()
+
+    InvWeaponClicked ((weaponPage * 12) + 12)
+
+End Sub
+''''''END OF INVENTORY WEAPON BUTTONS''''
+
+
+''''''ACTIVE WEAPONS SECTION'''''
+
+Private Sub Weapon_A1_Click()
+    If (weaponReference(1)) Then RemovingAWeapon 1
+
+End Sub
+
+Private Sub Weapon_A2_Click()
+    If (weaponReference(2)) Then RemovingAWeapon 2
+End Sub
+
+Private Sub Weapon_A3_Click()
+    If (weaponReference(3)) Then RemovingAWeapon 3
+End Sub
+''''''''END OF ACTIVE WEAPONS SECTION''''''''''
+
+Private Sub RemovingAWeapon(weaponNum As Integer)
+Dim thisWeapon As clsWeapon
+Dim k As Integer
+
+    'Figure out which weapon this is
+    For k = 1 To Player.weaponsInInventory.count
+        Set thisWeapon = Player.weaponsInInventory(k)
+        
+        If (thisWeapon.locationInActiveInventory = weaponNum) Then
+            thisWeapon.locationInActiveInventory = 0
+            weaponReference(weaponNum) = False
+        End If
+        
+    Next k
+    
+    InventoryScene("Weapon_A" & weaponNum).Picture = ImageTemplate.IMG_00.Picture
+    InventoryScene("Element_A" & weaponNum).Picture = ImageTemplate.IMG_00.Picture
+    InventoryScene("Damage_A" & weaponNum).Caption = ""
+    
+    UpdateActiveWeapons
+    
+End Sub
+
+
+
+
+Private Sub TabStrip1_Change()
+    If (tabIndex = 1) Then tabIndex = 2 Else tabIndex = 1
+    SwitchTabs
+End Sub
+
+
+
+Private Sub UserForm_Activate()
+    weaponPage = 0
+    tabIndex = 1
+    
+    'Reset all the active weapon slots
+    For i = 1 To 3
+        InventoryScene("Weapon_A" & i).Picture = ImageTemplate.IMG_00.Picture
+        InventoryScene("Element_A" & i).Picture = ImageTemplate.IMG_00.Picture
+        InventoryScene("Damage_A" & i).Caption = ""
+    Next i
+    
+    
+    RedrawScreen
+    
+End Sub
+
+
+Private Sub UserForm_Initialize()
+
+    'Set up the inventory frames
+    InventoryScene.Frm_Weapon.Top = 148
+    InventoryScene.Frm_Shield.Top = 148
+    InventoryScene.Height = 750
+    
+    'Determine the weapon pages
+    weaponPage = 0
+    pageCount = Application.WorksheetFunction.RoundUp(Player.weaponsInInventory.count / 12, 0) - 1      'Round up to the next multiple of 12 but then subtract 1 to match array
+    If (pageCount < 1) Then InventoryScene.Cmd_NextPage.Enabled = False
+    InventoryScene.Cmd_PrevPage.Enabled = False
+    
+    tabIndex = 1
+    SwitchTabs
+    
+    'Add blank active weapons
+    Dim tempWeapon As New clsWeapon
+    activeWeapons.Add tempWeapon
+    activeWeapons.Add tempWeapon
+    activeWeapons.Add tempWeapon
+    
+    
+    
+End Sub
+
+Private Sub RedrawScreen()
+
+Dim currentCounter As Integer
+Dim invWeapon As clsWeapon
+Dim invShield As clsShield
+
+    
+    'Set up inventory weapons
+        For i = 1 To 12
+        currentCounter = (weaponPage * 12) + i
+        
+        
+        If (currentCounter > Player.weaponsInInventory.count) Then
+            Set invWeapon = Nothing
+        Else
+            Set invWeapon = Player.weaponsInInventory(currentCounter)
+        End If
+        
+        If (invWeapon Is Nothing) Then
+            InventoryScene("Image_W" & i).Picture = ImageTemplate.IMG_00.Picture
+            InventoryScene("Element_W" & i).Picture = ImageTemplate.IMG_00.Picture
+            InventoryScene("Damage_W" & i).Caption = ""
+            InventoryScene("Image_W" & i).Enabled = False
+        Else
+            InventoryScene("Image_W" & i).Picture = ImageTemplate("Weapon_" & invWeapon.weaponName).Picture
+            InventoryScene("Element_W" & i).Picture = ImageTemplate("Element_" & invWeapon.weaponElement).Picture
+            InventoryScene("Damage_W" & i).Caption = invWeapon.damageLevel
+            InventoryScene("Image_W" & i).Enabled = True
+        End If
+        
+    Next i
+    
+    'Set up inventory shields
+    For i = 1 To 12
+        If (i > Player.shieldsInInventory.count) Then
+            Set invShield = Nothing
+        Else
+            Set invShield = Player.shieldsInInventory(i)
+        End If
+        
+        If (invShield Is Nothing) Then
+            InventoryScene("Image_S" & i).Picture = ImageTemplate.IMG_00.Picture
+            InventoryScene("Element_S" & i).Picture = ImageTemplate.IMG_00.Picture
+            InventoryScene("Damage_S" & i).Caption = ""
+            InventoryScene("Image_S" & i).Enabled = False
+        Else
+            InventoryScene("Image_S" & i).Picture = ImageTemplate.Shield.Picture
+            InventoryScene("Element_S" & i).Picture = ImageTemplate("Element_" & invShield.shieldElement).Picture
+            InventoryScene("Damage_S" & i).Caption = invShield.shieldProtection
+            InventoryScene("Image_S" & i).Enabled = True
+        End If
+        
+    Next i
+    
+    'Set up active weapons
+    UpdateActiveWeapons
+    
+    'Set up shield
+    If Player.activeShield.shieldElement = "" Then
+        RemoveShield False
+    Else
+        AddShield Player.activeShield
+        InventoryScene("Image_S" & Player.activeShield.locationInInventory).Enabled = False
+        InventoryScene("Damage_S" & Player.activeShield.locationInInventory).ForeColor = RGB(255, 0, 0)
+    End If
+    
+    RedrawActiveWeaponsInInventory
+
+End Sub
+
+Private Sub UpdateActiveWeapons()
+Dim currentWeapon As clsWeapon
+Dim tempLocation As Integer
+
+    'clear the weapon reference
+    For i = 1 To 3
+        weaponReference(i) = False
+    Next i
+
+    'Clear the player's active weapons
+    For i = Player.activeWeapons.count To 1 Step -1
+        Player.activeWeapons.Remove (i)
+    Next i
+    
+    'set the player's active weapons to be renumbered
+    For i = 1 To Player.weaponsInInventory.count
+        Set currentWeapon = Player.weaponsInInventory(i)
+        
+        'If not an active weapon, do nothing
+        If currentWeapon.locationInActiveInventory <> 0 Then
+            tempLocation = Player.activeWeapons.count
+            Player.activeWeapons.Add currentWeapon
+            activeWeapons.Remove (currentWeapon.locationInActiveInventory)
+            If (currentWeapon.locationInActiveInventory > activeWeapons.count) Then
+                activeWeapons.Add currentWeapon
+            Else
+                activeWeapons.Add currentWeapon, , currentWeapon.locationInActiveInventory
+            End If
+            weaponReference(currentWeapon.locationInActiveInventory) = True
+            
+            'Draw the active weapon in its slot
+            InventoryScene("Weapon_A" & currentWeapon.locationInActiveInventory).Picture = ImageTemplate("Weapon_" & currentWeapon.weaponName).Picture
+            InventoryScene("Element_A" & currentWeapon.locationInActiveInventory).Picture = ImageTemplate("Element_" & currentWeapon.weaponElement).Picture
+            InventoryScene("Damage_A" & currentWeapon.locationInActiveInventory).Caption = currentWeapon.damageLevel
+        End If
+    Next i
+    
+    RedrawActiveWeaponsInInventory
+End Sub
+
+Private Sub UserForm_Terminate()
+    UpdateActiveWeapons
+
+End Sub
+
+Private Sub RedrawActiveWeaponsInInventory()
+Dim tempLocation As Integer
+Dim thisWeapon As clsWeapon
+Dim j As Integer
+
+    'Reset them all
+    For j = 1 To 12
+        
+        'Location in inventory for this weapon slot on the page
+        tempLocation = weaponPage * 12 + j
+        
+        If (tempLocation > Player.weaponsInInventory.count) Then
+            Set thisWeapon = Nothing
+        Else
+            Set thisWeapon = Player.weaponsInInventory(tempLocation)
+        End If
+        
+        If thisWeapon Is Nothing Then
+            'Reset the square
+            InventoryScene("Image_W" & j).Enabled = True
+            InventoryScene("Damage_W" & j).ForeColor = RGB(255, 255, 255)
+        Else
+        
+            If (thisWeapon.locationInActiveInventory > 0) Then
+                'Set the coloring
+                InventoryScene("Image_W" & j).Enabled = False
+                InventoryScene("Damage_W" & j).ForeColor = RGB(255, 0, 0)
+            Else
+                'Reset the square
+                InventoryScene("Image_W" & j).Enabled = True
+                InventoryScene("Damage_W" & j).ForeColor = RGB(255, 255, 255)
+            End If
+        End If
+    Next j
+   
+End Sub
+
+Private Sub RemoveShield(toRemove As Boolean)
+    InventoryScene("Active_S").Picture = ImageTemplate.IMG_00.Picture
+    InventoryScene("Element_S").Picture = ImageTemplate.IMG_00.Picture
+    InventoryScene("Damage_S").Caption = ""
+    
+    If (toRemove) Then
+        ResetShield Player.activeShield.locationInInventory, True
+        Set Player.activeShield = Nothing
+    
+    End If
+    
+End Sub
+
+Private Sub AddShield(newShield As clsShield)
+    
+    InventoryScene("Active_S").Picture = ImageTemplate.Shield.Picture
+    InventoryScene("Element_S").Picture = ImageTemplate("Element_" & newShield.shieldElement).Picture
+    InventoryScene("Damage_S").Caption = newShield.shieldProtection
+    
+    Set Player.activeShield = newShield
+    ResetShield newShield.locationInInventory, False
+End Sub
+
+Private Sub ResetShield(shieldNum As Integer, toReset As Boolean)
+
+    If (toReset) Then
+        InventoryScene("Image_S" & shieldNum).Enabled = True
+        InventoryScene("Damage_S" & shieldNum).ForeColor = RGB(255, 255, 255)
+    Else
+        InventoryScene("Image_S" & shieldNum).Enabled = False
+        InventoryScene("Damage_S" & shieldNum).ForeColor = RGB(255, 0, 0)
+    End If
+    
+End Sub
+
+
+Private Sub SwitchTabs()
+    If (tabIndex = 1) Then
+        InventoryScene.Frm_Weapon.Visible = True
+        InventoryScene.Frm_Shield.Visible = False
+    Else
+        InventoryScene.Frm_Weapon.Visible = False
+        InventoryScene.Frm_Shield.Visible = True
+    End If
+End Sub
+
+Public Sub SetupFromScene()
+    'Set up the buttons
+    InventoryScene.Lbl_FromScene.Visible = False
+    If (InventoryScene.Lbl_FromScene.Caption = "GameLevel") Then
+        InventoryScene.Cmd_Exit.Visible = True
+    Else
+        InventoryScene.Cmd_Exit.Visible = False
+    End If
+    
+    If (InventoryScene.Lbl_FromScene.Caption = "Battle") Then
+        InventoryScene.Cmd_Battle.Visible = True
+    Else
+        InventoryScene.Cmd_Battle.Visible = False
+    End If
+End Sub

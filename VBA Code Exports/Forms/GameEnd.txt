@@ -1,0 +1,48 @@
+Option Explicit
+
+
+
+Private Sub CmdExit_Click()
+    GameEnd.Hide
+    Unload Me
+    
+    End
+    
+End Sub
+
+Private Sub UserForm_Initialize()
+
+    If (IsGameOverResult = 2) Then
+        With GameEnd.Lbl_Win
+            .Visible = True
+            .Top = 30
+        End With
+        
+        GameEnd.Lbl_Lose.Visible = False
+        SetupResultCaption (True)
+    Else
+        With GameEnd.Lbl_Lose
+            .Visible = True
+            .Top = 30
+        End With
+        
+        GameEnd.Lbl_Win.Visible = False
+        SetupResultCaption (False)
+    End If
+
+End Sub
+
+Private Sub SetupResultCaption(result As Boolean)
+Dim message As String
+
+    If (result) Then
+        message = "Congratulations! You have braved the maze and escaped! If you would like to play again, please re-open the Excel file."
+        
+    Else
+        message = "I am sorry. You did not survive the maze. If you would like to try again, please re-open the Excel file."
+    End If
+    
+    message = message & Chr(10) & Chr(10) & "Thank you for playing and hope you enjoyed this RPG built in Microsoft Excel using VBA"
+    GameEnd.Lbl_Message.Caption = message
+    
+End Sub

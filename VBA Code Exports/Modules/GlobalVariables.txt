@@ -1,0 +1,95 @@
+Option Explicit
+
+' Worksheet names
+Public Const LEVELCONVERSIONSHEET = "Level Conversion Table"
+Public Const GAMELEVELSHEET = "Game Level Design"
+Public Const ENEMYDATASHEET = "EnemyData"
+Public Const OVERLAYSHEET = "Overlay Design"
+Public Const OVERLAYTABLESHEET = "Overlay Types"
+Public Const ELEMENTSTABLESHEET = "ElementData"
+Public Const PLAYERLEVELSHEET = "PlayerLevelData"
+Public Const WEAPONTYPESHEET = "WeaponsData"
+Public Const PROBABILITYDATASHEET = "ProbabilityData"
+Public Const TREASURECHESTSHEET = "TreasureChestData"
+Public Const LEVELUPSHEET = "LevelUpData"
+Public Const ADJECTIVESHEET = "AdjectiveSheet"
+
+'Other Constants based on Form Design
+Public Const MAXWEAPONS = 60
+Public Const MAXSHIELDS = 12
+Public Const XPWIDTH = 200
+
+
+Public LevelConversionDict
+    'matches Level Conversion Table tab
+Public OverlayConversionTable() As clsOverlayCellTypes
+
+Public LevelDetail() As clsLevelDetail
+Public OverlayDetail() As clsLevelOverlay
+
+Public StartingXCell As Integer     'The starting point for the form (upper left corner)
+Public StartingYcell As Integer     'The starting point for the form (upper left corner)
+Public DesignXDimension As Integer   'Dimension of spreadsheet width
+Public DesignYDimension As Integer   'Dimension of spreadsheet height
+Public ViewportXDimension As Integer   'Dimension of screen form width
+Public ViewportYDimension As Integer   'Dimension of screen form height
+Public LevelZoom As Integer
+
+Public PlayerStart(1 To 2) As Integer
+Public Player As clsPlayer
+Public PlayerLives As Integer
+Public PowerLevels(0 To 10, 0 To 2) As Integer
+Public PlayerMaxPowerLevel As Integer
+Public ShieldMaximumBoost As Integer
+Public WeaponTypes(0 To 2) As String
+Public ProbabilityAdjustment(1 To 5, 1 To 2) As Integer
+Public MovementXPBoost As Integer
+Public MovementXPCounter As Integer
+Public FleeXPCost As Integer
+Public LostXPCost As Integer
+Public ChestDict
+Public ChestImageDict(1 To 2) As String
+Public ChestInRange As Variant
+Public ProbablityOfWeapon As Integer
+Public ProbablityOfShield As Integer
+Public XPTable(0 To 4) As Integer       'For storing XP needed to level up to next level; nothing after level 5
+
+Public ElementsDict
+Public IsElementsBuilt As Boolean   'Use this to check that the ElementsDict has been created to prevent re-creating it over and over
+Public EnemiesDict
+Public EnemiesTypesDict
+Public EnemyDistance As Double
+Public EnemyInRange As Variant
+Public EnemyAdjectives() As String
+Public HasPlayerWon As Boolean
+Public IsGameOverResult As Integer  'Use this to track game progress. 0 = game playing, 1 = player died, 2 = player found exit
+
+
+
+Sub SetGameVariables()
+
+
+    ' Set Level Size and other variables
+    DesignXDimension = 245
+    DesignYDimension = 240
+    ViewportXDimension = 16
+    ViewportYDimension = 8
+    LevelZoom = 125
+    StartingXCell = 1
+    StartingYcell = 1
+    EnemyDistance = 1.5
+    ShieldMaximumBoost = 2
+    MovementXPBoost = 1
+    MovementXPCounter = 50
+    PlayerMaxPowerLevel = 9
+    PlayerLives = 5
+    FleeXPCost = 10
+    LostXPCost = 25
+    IsElementsBuilt = False
+    ProbablityOfWeapon = 75     'What percentage of chests WILL NOT have a weapon (if not already having a shield)
+    ProbablityOfShield = 95     'What percentage of chests WILL NOT have a weapon
+    IsGameOverResult = 0
+    
+    
+    
+End Sub

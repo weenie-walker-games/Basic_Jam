@@ -1,0 +1,268 @@
+Option Explicit
+Dim i As Integer, j As Integer
+
+Sub BuildLevelCells()
+' This builds the base level conversion table
+
+Dim currentCell As clsLevelCellTypes
+Dim thisCellCode As String
+
+'Create the Level Conversion Dictionary
+Set LevelConversionDict = CreateObject("Scripting.Dictionary")
+
+For i = 1 To 26
+
+    thisCellCode = Sheets(LEVELCONVERSIONSHEET).Cells(i + 2, 2).value
+    Set currentCell = New clsLevelCellTypes
+
+    With currentCell
+        .codeLetter = thisCellCode
+        .description = Sheets(LEVELCONVERSIONSHEET).Cells(i + 2, 3).value
+        .imagename = Sheets(LEVELCONVERSIONSHEET).Cells(i + 2, 4).value
+        .isPlayerWalkable = Sheets(LEVELCONVERSIONSHEET).Cells(i + 2, 5).value
+        .overlayTableReference = Sheets(LEVELCONVERSIONSHEET).Cells(i + 2, 6).value
+        .isOverlayCode = Sheets(LEVELCONVERSIONSHEET).Cells(i + 2, 7).value
+    
+    End With
+
+    'Add the cell to the dictionary
+    LevelConversionDict.Add thisCellCode, currentCell
+
+Next i
+
+
+End Sub
+
+Sub BuildLevel()
+' This builds the base level
+
+Dim codeConvert As Integer
+Dim result As String
+Dim cell As clsLevelCellTypes
+Dim enemy As clsEnemy
+Dim posString As String
+Dim treasure As clsTreasure
+
+ReDim LevelDetail(1 To DesignXDimension, 1 To DesignYDimension) As clsLevelDetail
+
+For i = 1 To DesignXDimension
+For j = 1 To DesignYDimension
+
+    Set LevelDetail(i, j) = New clsLevelDetail
+    
+    result = Sheets(GAMELEVELSHEET).Cells(j + 1, i + 1).value
+        'Set Player starting point
+        If (result = "S") Then
+            Player.currentLocationY = j
+            Player.currentLocationX = i
+        End If
+        
+        'Create the enemies
+        If (result = "E" Or result = "I" Or result = "H" Or result = "N") Then
+            Set enemy = New clsEnemy
+            enemy.xLocation = i
+            enemy.yLocation = j
+            enemy.SetEnemyDifficulty result
+            enemy.SetEnemyElement
+            posString = i & "-" & j
+            EnemiesDict.Add posString, enemy
+        End If
+        
+        'Create the Chest
+        If (result = "C") Then
+            Set treasure = New clsTreasure
+            treasure.locationX = i
+            treasure.locationY = j
+            treasure.SetupChest
+            posString = i & "-" & j
+            ChestDict.Add posString, treasure
+        End If
+        
+        
+    Set cell = LevelConversionDict.Item(result)
+    
+    With LevelDetail(i, j)
+        .xLocation = j
+        .yLocation = i
+        .cellImageString = cell.imagename
+        .isWalkable = cell.isPlayerWalkable
+        .overlayTable = cell.overlayTableReference
+        .overlayCode = cell.isOverlayCode
+    End With
+        
+
+Next j
+Next i
+
+End Sub
+
+Sub BuildOverlayTable()
+' This builds the overlay conversion table
+
+    Dim numRows As Integer
+    Dim tbl As ListObject
+    Set tbl = Sheets(OVERLAYTABLESHEET).ListObjects("Overlays")
+    
+    numRows = tbl.DataBodyRange.Rows.count
+    
+    ReDim OverlayConversionTable(1 To numRows)
+    
+For i = 1 To numRows
+       Set OverlayConversionTable(i) = New clsOverlayCellTypes
+       
+    With OverlayConversionTable(i)
+        .codeLetter = Sheets(OVERLAYTABLESHEET).Cells(i + 2, 2).value
+        .typeName = Sheets(OVERLAYTABLESHEET).Cells(i + 2, 3).value
+        .imagename = Sheets(OVERLAYTABLESHEET).Cells(i + 2, 4).value
+        .isPlayerWalkable = Sheets(OVERLAYTABLESHEET).Cells(i + 2, 5).value
+
+    End With
+        
+        
+Next i
+    
+    
+End Sub
+
+Sub BuildOverlayLevel()
+' This builds the overlay level
+
+Dim codeConvert As Integer
+Dim result As String
+
+ReDim OverlayDetail(1 To DesignXDimension, 1 To DesignYDimension) As clsLevelOverlay
+
+For i = 1 To ViewportXDimension
+For j = 1 To ViewportYDimension
+
+    Set OverlayDetail(i, j) = New clsLevelOverlay
+    result = Sheets(OVERLAYSHEET).Cells(j + 1, i + 1).value
+    If (result <> "") Then
+        codeConvert = Letter2Number(result)
+        
+        With OverlayDetail(i, j)
+            .cellImageString = OverlayConversionTable(codeConvert).imagename
+            .xLocation = i
+            .yLocation = j
+            .isWalkable = OverlayConversionTable(codeConvert).isPlayerWalkable
+        End With
+    End If
+
+Next j
+Next i
+
+End Sub
+
+Sub BuildElements()
+
+    Dim numRows As Integer
+    Dim element As clsElement
+    Dim tbl As ListObject
+    Set tbl = Sheets(ELEMENTSTABLESHEET).ListObjects("Elements")
+    
+    numRows = tbl.DataBodyRange.Rows.count
+
+Set ElementsDict = CreateObject("Scripting.Dictionary")
+
+    For i = 1 To numRows
+        Set element = New clsElement
+        element.elementName = Sheets(ELEMENTSTABLESHEET).Cells(i + 2, 3)
+        element.pbEarth = Sheets(ELEMENTSTABLESHEET).Cells(i + 2, 4)
+        element.pbFire = Sheets(ELEMENTSTABLESHEET).Cells(i + 2, 5)
+        element.pbAir = Sheets(ELEMENTSTABLESHEET).Cells(i + 2, 6)
+        element.pbWater = Sheets(ELEMENTSTABLESHEET).Cells(i + 2, 7)
+        element.pbEnergy = Sheets(ELEMENTSTABLESHEET).Cells(i + 2, 8)
+        
+        ElementsDict.Add element.elementName, element
+        
+    Next i
+    
+    'Set the variable for the dictionary been built
+    IsElementsBuilt = True
+    
+End Sub
+
+Sub BuildEnemyTypes()
+    
+    Dim numRows As Integer
+    Dim enemyType As clsEnemyTypes
+    Dim tbl As ListObject
+    Set tbl = Sheets(ENEMYDATASHEET).ListObjects("Enemies")
+    
+    numRows = tbl.DataBodyRange.Rows.count
+
+   Set EnemiesTypesDict = CreateObject("Scripting.Dictionary")
+
+    For i = 1 To numRows
+        Set enemyType = New clsEnemyTypes
+        enemyType.enemyCode = Sheets(ENEMYDATASHEET).Cells(i + 2, 2)
+        enemyType.description = Sheets(ENEMYDATASHEET).Cells(i + 2, 3)
+        enemyType.difficulty = Sheets(ENEMYDATASHEET).Cells(i + 2, 4)
+        enemyType.mainImage = Sheets(ENEMYDATASHEET).Cells(i + 2, 5)
+        enemyType.battleImage = Sheets(ENEMYDATASHEET).Cells(i + 2, 6)
+        enemyType.weapon = Sheets(ENEMYDATASHEET).Cells(i + 2, 7)
+        enemyType.playerHealthScalerMin = Sheets(ENEMYDATASHEET).Cells(i + 2, 8)
+        enemyType.playerHealthScalerMax = Sheets(ENEMYDATASHEET).Cells(i + 2, 9)
+        
+        
+        
+        EnemiesTypesDict.Add enemyType.enemyCode, enemyType
+        
+    Next i
+
+End Sub
+
+Sub BuildChestImageDict()
+    Dim numRows As Integer
+    Dim tbl As ListObject
+    Set tbl = Sheets(TREASURECHESTSHEET).ListObjects("ChestData")
+    
+    numRows = tbl.DataBodyRange.Rows.count
+   
+    For i = 1 To numRows
+        ChestImageDict(i) = Sheets(TREASURECHESTSHEET).Cells(i + 2, 3)
+    Next i
+   
+End Sub
+
+Sub BuildPowerLevels()
+
+    For i = 0 To PlayerMaxPowerLevel
+        PowerLevels(i, 0) = Sheets(PLAYERLEVELSHEET).Cells(i + 3, 3)    'Player max health amount
+        PowerLevels(i, 1) = Sheets(PLAYERLEVELSHEET).Cells(i + 3, 4)    'Player damage amount
+        PowerLevels(i, 2) = Sheets(PLAYERLEVELSHEET).Cells(i + 3, 5)    'XP Needed for next level
+    Next i
+End Sub
+
+Sub BuildWeaponTypes()
+
+    For i = 0 To 2
+        WeaponTypes(i) = Sheets(WEAPONTYPESHEET).Cells(i + 3, 3)
+    Next i
+    
+End Sub
+
+Sub BuildPercentages()
+    
+    For i = 1 To 5
+        ProbabilityAdjustment(i, 1) = Sheets(PROBABILITYDATASHEET).Cells(i + 2, 3)
+        ProbabilityAdjustment(i, 2) = Sheets(PROBABILITYDATASHEET).Cells(i + 2, 4)
+        
+    Next i
+    
+End Sub
+
+Sub BuildAdjectives()
+    Dim numRows As Integer
+    Dim tbl As ListObject
+    Set tbl = Sheets(ADJECTIVESHEET).ListObjects("Adjectives")
+    
+    numRows = tbl.DataBodyRange.Rows.count
+    
+    ReDim EnemyAdjectives(1 To numRows)
+    
+    For i = 1 To numRows
+        EnemyAdjectives(i) = Sheets(ADJECTIVESHEET).Cells(i + 2, 2)
+    Next i
+
+End Sub

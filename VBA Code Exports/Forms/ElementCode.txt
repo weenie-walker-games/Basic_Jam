@@ -1,0 +1,32 @@
+Option Explicit
+
+Private Sub Cmd_Exit_Click()
+    ElementCode.Hide
+    Unload Me
+End Sub
+
+Private Sub Frame1_Click()
+
+End Sub
+
+Private Sub UserForm_Initialize()
+Dim i As Integer
+Dim element As clsElement
+Dim result As Integer
+
+    'Check if elements dictionary is built
+    If (IsElementsBuilt = False) Then BuildElements
+    
+    
+    'Set up the form
+    For i = 0 To 4
+        Set element = ElementsDict.Item(ReturnElementName(i))
+        ElementCode("Lbl_" & i & "_0").Caption = Chr(10) & (element.pbEarth * 100) & "%"
+        ElementCode("Lbl_" & i & "_1").Caption = Chr(10) & (element.pbFire * 100) & "%"
+        ElementCode("Lbl_" & i & "_2").Caption = Chr(10) & (element.pbAir * 100) & "%"
+        ElementCode("Lbl_" & i & "_3").Caption = Chr(10) & (element.pbWater * 100) & "%"
+        ElementCode("Lbl_" & i & "_4").Caption = Chr(10) & (element.pbEnergy * 100) & "%"
+        
+    Next i
+
+End Sub

@@ -1,0 +1,34 @@
+Option Explicit
+
+Private Sub Cmd_Start_Click()
+    Me.Hide
+    Unload Me
+    GameLevel.show
+End Sub
+
+
+Private Sub UserForm_Activate()
+    SetupGameData
+End Sub
+
+Private Sub UserForm_Initialize()
+    
+Dim weapon As clsWeapon
+    
+    'Hide the start game button first
+    StartScreen.Cmd_Start.Visible = False
+    
+    
+    'Set up the player icons
+    StartScreen.Shield_Image.Picture = ImageTemplate.Shield.Picture
+    StartScreen.Shield_Element.Picture = ImageTemplate("Element_" & Player.activeShield.shieldElement).Picture
+    StartScreen.Shield_Protection.Caption = Player.activeShield.shieldProtection
+    
+    Set weapon = Player.activeWeapons(1)
+    StartScreen.Weapon_Image.Picture = ImageTemplate("Weapon_" & weapon.weaponName).Picture
+    StartScreen.Weapon_Element.Picture = ImageTemplate("Element_" & weapon.weaponElement).Picture
+    StartScreen.Weapon_Damage.Caption = weapon.damageLevel
+    
+
+    
+End Sub

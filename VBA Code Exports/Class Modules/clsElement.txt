@@ -1,0 +1,11 @@
+Option Explicit
+
+'Acts like an enum for the elements
+
+Public elementName As String
+Public pbEarth As Variant
+Public pbFire As Variant
+Public pbAir As Variant
+Public pbWater As Variant
+Public pbEnergy As Variant
+

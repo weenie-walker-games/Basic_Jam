@@ -1,0 +1,10 @@
+Option Explicit
+
+Public codeLetter As String
+Public description As String
+Public imagename As String
+Public isPlayerWalkable As Boolean
+Public overlayTableReference As String
+Public isOverlayCode As String
+
+

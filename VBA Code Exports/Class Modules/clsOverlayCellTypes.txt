@@ -1,0 +1,7 @@
+Option Explicit
+
+
+Public codeLetter As String
+Public typeName As String
+Public imagename As String
+Public isPlayerWalkable As Boolean

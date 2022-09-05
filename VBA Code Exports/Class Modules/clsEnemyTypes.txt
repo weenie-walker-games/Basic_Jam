@@ -1,0 +1,11 @@
+Option Explicit
+
+Public enemyCode As String
+Public description As String
+Public difficulty As String
+Public mainImage As String
+Public battleImage As String
+Public weapon As String
+Public playerHealthScalerMin As Integer
+Public playerHealthScalerMax As Integer
+

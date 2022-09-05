@@ -1,0 +1,23 @@
+Option Explicit
+
+Public shieldElement As String
+Public shieldProtection As Integer
+Public playerLevel As Integer
+Public locationInInventory As Integer
+
+Public Sub CreateShield(level As Integer)
+Dim w As Integer
+Dim high As Integer, low As Integer
+    
+    'Determine shield protection
+    playerLevel = level
+    high = PowerLevels(level, 1) * ShieldMaximumBoost
+    low = PowerLevels(level, 1)
+    shieldProtection = RandomBetweenTwoNumbers(low, high)
+    
+    'Determine weapon element
+    shieldElement = SetElement
+    
+
+End Sub
+

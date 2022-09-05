@@ -1,0 +1,61 @@
+Option Explicit
+
+
+Sub StartGame()
+Dim starterWeapon As clsWeapon
+
+    'Initialize the random number generator
+    Randomize
+    
+    'Set the game's variables
+    SetGameVariables
+    
+    'Create the Player and EnemiesDict
+    BuildPowerLevels
+    BuildWeaponTypes
+    BuildPercentages
+    Set Player = New clsPlayer
+    Player.currentPlayerImage = "IMG_P"
+    Player.SetUpCharacter 0, PlayerLives
+    '''TODO: Right now, I'm setting a Player image. I could adjust this later to use the facing direction
+    Set EnemiesDict = CreateObject("Scripting.Dictionary")
+    EnemyInRange = Null
+    Set ChestDict = CreateObject("Scripting.Dictionary")
+    ChestInRange = Null
+    
+    'Show the StartGame Screen
+    StartScreen.show
+    
+
+
+End Sub
+
+Sub SetupGameData()
+
+    DoEvents
+    
+    ' Build the Dictionaries and Level Data in background
+    BuildChestImageDict
+    BuildEnemyTypes
+    BuildElements
+    BuildLevelCells
+    BuildLevel
+    BuildOverlayTable
+    BuildAdjectives
+
+
+    'Activate the start screen button now that game is loaded
+    Sleep 1000
+    StartScreen.Cmd_Start.Visible = True
+    DoEvents
+
+
+End Sub
+
+Sub EndGame()
+
+    Unload GameLevel
+    Load GameEnd
+    GameEnd.show
+
+End Sub

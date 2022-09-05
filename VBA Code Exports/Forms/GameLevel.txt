@@ -1,0 +1,415 @@
+Option Explicit
+    Dim i As Integer, j As Integer, X As Integer, Y As Integer
+    Dim isChestNearby As Boolean
+
+Private Sub CmdExit_Click()
+    GameLevel.Hide
+    Unload Me
+    
+    End
+End Sub
+
+
+Private Sub CommandButton1_Click()
+    OpenInventory
+End Sub
+
+Private Sub UserForm_Activate()
+    
+    UpdateHearts
+    RedrawScreen 0, 0
+    
+End Sub
+
+
+Private Sub UserForm_Initialize()
+
+    Dim fm As Frame
+    Dim Img As Image
+    Dim currentCellDetail As clsLevelDetail
+    Dim result As String
+    Dim overlayCode As String
+
+        
+    'Hide the message/alert boxes
+    GameLevel.Lbl_Chest.Visible = False
+    isChestNearby = False
+    GameLevel.Got_Item.Visible = False
+    GameLevel.Got_XP.Visible = False
+    GameLevel.Lbl_LevelUp.Visible = False
+    
+        
+    GameLevel.Zoom = LevelZoom
+    
+    'Create a frame to hold the game board
+    Set fm = GameLevel.Controls.Add("Forms.Frame.1")
+
+    With fm
+        .Height = (50 * ViewportYDimension) + 20
+        .Width = (50 * ViewportXDimension) + 20
+        .Top = 190 - 100
+        .Left = 40 - 20
+        .Enabled = False
+
+    End With
+    
+    'Create the game board
+    For i = 1 To ViewportXDimension
+        For j = 1 To ViewportYDimension
+        
+    X = StartingXCell + i - 1
+    Y = StartingYcell + j - 1
+        
+        
+    ' Create an image box for the base background
+    Set Img = fm.Controls.Add("Forms.Image.1", "Cell_" & j & "_" & i, True)
+    Set currentCellDetail = LevelDetail(X, Y)
+    GameLevel("Cell_" & j & "_" & i).Height = 50
+    GameLevel("Cell_" & j & "_" & i).Width = 50
+
+    ' Create the overlay blocks
+    Set Img = fm.Controls.Add("Forms.Image.1", "OverlayCell_" & j & "_" & i, True)
+    GameLevel("OverlayCell_" & j & "_" & i).Height = 50
+    GameLevel("OverlayCell_" & j & "_" & i).Width = 50
+    
+    Next j
+    Next i
+    
+    
+    ' Create Player
+    Set Img = fm.Controls.Add("Forms.Image.1", "Player", True)
+    
+    With Img
+        .PictureSizeMode = fmPictureSizeModeStretch
+        .BorderStyle = fmBorderStyleNone
+        .BackStyle = fmBackStyleTransparent
+    End With
+    
+    MovePlayer
+    
+    With GameLevel("Player")
+        .Height = 50
+        .Width = 50
+    End With
+    
+    Player.UpdatePlayerXP 0
+    
+    UpdateLives 0, 0
+    UpdateHearts
+    RedrawScreen 0, 0
+
+End Sub
+
+
+Private Sub UserForm_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+    
+    'Check for movement
+        
+    If KeyCode = vbKeyUp Then TryMove 0, -1
+    If KeyCode = vbKeyRight Then TryMove 1, 0
+    If KeyCode = vbKeyDown Then TryMove 0, 1
+    If KeyCode = vbKeyLeft Then TryMove -1, 0
+        
+    'Check other keys
+    ''I for Inventory
+    If KeyCode = vbKeyI Then
+        OpenInventory
+    End If
+    
+    'Check for O key
+    If KeyCode = vbKeyO And isChestNearby Then
+        'Open Chest
+        Dim X As Integer, Y As Integer, s As Integer, t As Integer
+        s = ChestInRange.locationX + 1 - StartingXCell
+        t = ChestInRange.locationY + 1 - StartingYcell
+        ChestInRange.OpenChest GameLevel("OverlayCell_" & t & "_" & s), Player.currentPowerLevel
+        isChestNearby = False
+        ChestInRange = Null
+    End If
+
+End Sub
+
+Sub OpenInventory()
+        
+        Load InventoryScene
+        InventoryScene.Lbl_FromScene.Caption = "GameLevel"
+        InventoryScene.SetupFromScene
+        GameLevel.Hide
+        InventoryScene.show
+
+        'After leaving InventoryScene
+        Unload InventoryScene
+        GameLevel.show
+    
+
+End Sub
+
+Sub RedrawScreen(horizontal As Integer, vertical As Integer)
+
+    Dim Img As Image
+    Dim currentCellDetail As clsLevelDetail
+    Dim result As String
+    Dim code As String
+    Dim table As String
+    Dim overlayCode As String
+
+    
+    'Update the starting position (upper left corner) for the game board
+    StartingXCell = StartingXCell + (ViewportXDimension * horizontal)
+    StartingYcell = StartingYcell + (ViewportYDimension * vertical)
+    
+    
+    For i = 1 To ViewportXDimension
+        For j = 1 To ViewportYDimension
+        
+    X = StartingXCell + i - 1
+    Y = StartingYcell + j - 1
+        
+        
+    ' Update the image box for the base background
+    Set Img = GameLevel("Cell_" & j & "_" & i)
+    Set currentCellDetail = LevelDetail(X, Y)
+    With Img
+        .Picture = ImageTemplate(currentCellDetail.cellImageString).Picture
+        .PictureSizeMode = fmPictureSizeModeStretch
+        .Left = (i * 50) + 10 - 50
+        .Top = (j * 50) + 10 - 50
+        .BorderStyle = fmBorderStyleNone
+        .BackStyle = fmBackStyleTransparent
+    End With
+
+    
+    ' Update the overlay blocks
+    overlayCode = currentCellDetail.overlayCode
+    Set Img = GameLevel("OverlayCell_" & j & "_" & i)
+    table = currentCellDetail.overlayTable
+    
+    If (table = "EnemyTable") Then
+        Dim enemy As clsEnemy
+        Dim enemyType As clsEnemyTypes
+        
+        Set enemy = EnemiesDict.Item(X & "-" & Y)
+        
+        If (enemy.isEnemyAlive) Then
+            code = enemy.enemyCode
+            Set enemyType = EnemiesTypesDict.Item(code)
+            result = enemyType.mainImage
+        Else
+            currentCellDetail.isWalkable = True
+        End If
+    Else
+        If (table = "ChestTable") Then
+            Dim treasure As clsTreasure
+            Set treasure = ChestDict.Item(X & "-" & Y)
+            If (treasure.isOpen) Then result = treasure.openImage Else result = treasure.closedImage
+        Else
+            result = OverlayConversionTable(Letter2Number(overlayCode)).imagename
+        End If
+    End If
+    
+        With Img
+            .Picture = ImageTemplate(result).Picture
+            .PictureSizeMode = fmPictureSizeModeStretch
+            .Left = (i * 50) + 10 - 50
+            .Top = (j * 50) + 10 - 50
+            .BorderStyle = fmBorderStyleNone
+            .BackStyle = fmBackStyleTransparent
+        End With
+    
+    Next j
+    Next i
+
+End Sub
+
+Public Sub MovePlayer()
+
+    
+    If (Player.currentLocationX < StartingXCell) And StartingXCell <> 1 Then RedrawScreen -1, 0
+    If (Player.currentLocationX > (StartingXCell + ViewportXDimension - 1)) And StartingXCell <> (DesignXDimension - ViewportXDimension) Then RedrawScreen 1, 0
+    If (Player.currentLocationY < StartingYcell) And StartingYcell <> 1 Then RedrawScreen 0, -1
+    If (Player.currentLocationY > (StartingYcell + ViewportYDimension - 1)) And StartingYcell <> (DesignYDimension - ViewportYDimension) Then RedrawScreen 0, 1
+    
+    
+    With GameLevel("Player")
+        .Picture = ImageTemplate(Player.currentPlayerImage).Picture
+        .Left = ((Player.currentLocationX - StartingXCell + 1) * 50) + 10 - 50
+        .Top = ((Player.currentLocationY - StartingYcell + 1) * 50) + 10 - 50
+    End With
+    
+    
+    'Check if at exit door
+    If (IsGameOverResult = 2) Then
+        EndOfGame
+        Exit Sub
+    End If
+    
+End Sub
+
+Public Sub Battle()
+       
+    MovePlayer
+    DoEvents
+    Sleep 1000
+    Load EnemyAppear
+    GameLevel.Hide
+    EnemyAppear.show
+
+    GameLevel.show
+    
+    Set EnemyInRange = Nothing
+    
+    
+
+End Sub
+
+Private Sub EndOfGame()
+        Me.Hide
+        EndGame
+End Sub
+
+Public Sub ShowChestInfo(isNearby As Boolean)
+    
+    GameLevel.Lbl_Chest.Visible = isNearby
+    isChestNearby = isNearby
+    
+End Sub
+
+Public Sub UpdateLives(battleResult As Integer, enemyHealth As Integer)
+    
+    '''NEED TO ADD THIS FUNCTIONALITY'''
+    If (battleResult = 2) Then      'Player lost battle
+        Player.UpdatePlayerLives (-1)
+        
+        If (IsGameOverResult = 1) Then
+            'Player lost
+            EndOfGame
+            Exit Sub
+        End If
+            
+        
+        'Update Lives on GameLevel
+        UpdateHearts
+    End If
+    
+    'Reset player health
+    Player.SetPlayerHealth 0, True
+    
+    'Check Battle Result
+    'If battleResult is 0 then no battle has occurred
+    
+    'Did player flee? Subtract a smaller % of Enemy Damage from Player XP than a loss
+    If (battleResult = 1) Then Player.UpdatePlayerXP (-1 * FleeXPCost * enemyHealth / 100)
+    'Did player lose? Subtract % of Enemy Damage from Player XP
+    If (battleResult = 2) Then Player.UpdatePlayerXP (-1 * LostXPCost * enemyHealth / 100)
+    'Did player win? Award % of Enemy Damage as XP
+    If (battleResult = 3) Then Player.UpdatePlayerXP (LostXPCost * enemyHealth / 100)
+    
+End Sub
+
+Private Sub UpdateGameLevelLives()
+Dim numLives As Integer
+
+    numLives = Player.GetPlayerLives
+    
+    
+End Sub
+
+Private Sub UpdateHearts()
+Dim livesLeft As Integer
+
+    livesLeft = Player.GetPlayerLives
+    
+    For i = 1 To 5
+        
+        'Reset the heart to full
+        GameLevel("Heart_" & i).Picture = ImageTemplate.Heart_Full.Picture
+        
+        'If player does not have this life, set it to empty
+        If (i > livesLeft) Then GameLevel("Heart_" & i).Picture = ImageTemplate.Heart_Empty.Picture
+    
+    Next i
+    
+End Sub
+
+Public Sub UponChestOpening(itemType As String, newXPAmount As Integer)
+    
+    'Turn off the open chest label
+    GameLevel.Lbl_Chest.Visible = False
+            
+    'Update the item image
+    If (itemType <> "") Then
+        GameLevel.Got_Item.Picture = ImageTemplate(itemType).Picture
+        GameLevel.Got_Item.Visible = True
+    End If
+    
+    'Update the XP amount
+    GameLevel.Got_XP.Caption = "+" & newXPAmount
+    GameLevel.Got_XP.Visible = True
+    Player.UpdatePlayerXP newXPAmount
+    
+    DoEvents
+    
+    Sleep 2000
+        
+    'Turn indicators back off
+    GameLevel.Got_Item.Visible = False
+    GameLevel.Got_XP.Visible = False
+    
+    
+    
+End Sub
+
+Public Sub UpdatePlayerXP(currentXP As Integer, neededXPAmount As Integer)
+
+Dim xpPercentage As Variant
+Dim newWidth As Integer
+
+    'check to see if player is at max
+    If (Player.currentPowerLevel = PlayerMaxPowerLevel) Then
+        newWidth = XPWIDTH
+    Else
+        xpPercentage = (currentXP / neededXPAmount)
+        newWidth = xpPercentage * XPWIDTH
+    End If
+    
+    'Update the XP slider
+    If (newWidth = 0) Then
+        'hide the slider to prevent an error
+        GameLevel.Lbl_XP.Visible = False
+    Else
+        With GameLevel.Lbl_XP
+            .Width = newWidth
+            .Visible = True
+        End With
+    End If
+    
+    
+End Sub
+
+Public Sub UpdatePlayerLevels(currentLevel As Integer, isNewLevel As Boolean)
+
+    'First, max out the slider and display a message for a second about a new level
+    If (isNewLevel) Then
+        'Turn on a Level Up message
+        GameLevel.Lbl_LevelUp.Visible = True
+        UpdatePlayerXP 100, 100
+        DoEvents
+        Sleep 1000
+        GameLevel.Lbl_LevelUp.Visible = False
+    End If
+    
+    'Next, set the new levels and run the rest of the code to reset the slider
+
+    
+    If (currentLevel = PlayerMaxPowerLevel) Then
+        GameLevel.Lbl_LevelNow.Visible = False
+        GameLevel.Lbl_LevelNext.Visible = False
+        GameLevel.Lbl_LevelUp.Caption = "MAX"
+        GameLevel.Lbl_LevelUp.Visible = True
+    Else
+        GameLevel.Lbl_LevelNow.Caption = currentLevel
+        GameLevel.Lbl_LevelNext.Caption = currentLevel + 1
+    End If
+
+    
+End Sub

@@ -1,0 +1,9 @@
+Option Explicit
+
+Public cellImageString As String
+Public xLocation As Integer
+Public yLocation As Integer
+Public isWalkable As Boolean
+Public overlayTableReference As String
+Public overlayType As clsOverlay
+
